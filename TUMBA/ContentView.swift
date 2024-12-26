@@ -1,24 +1,23 @@
-//
-//  ContentView.swift
-//  TUMBA
-//
-//  Created by Евгения Аполонник on 25.12.2024.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("isLoggedIn") private var isLoggedIn = false
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        if !hasSeenOnboarding {
+            // Онбординг
+            OnboardingView()
+        } else if !isLoggedIn {
+            // Экран логина
+            LoginView()
+        } else {
+            // Основной экран
+            MainView()
         }
-        .padding()
     }
 }
 
 #Preview {
-    ContentView()
+    MainView()
 }
