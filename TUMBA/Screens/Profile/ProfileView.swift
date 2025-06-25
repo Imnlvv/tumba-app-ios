@@ -1,29 +1,51 @@
-//  ProfileView.swift
-//  Для страницы профиля есть еще идея реализовать вид чужого/текущего профиля: хочу использовать один визуальный образ (как сейчас), но интегрировать параметр isCurrentUser (чтобы определить, отображается профиль текущего пользователя или чужого, и тем самым контролировать показываемый контент: скрывать или показывать определённые элементы (кнопки "Редактировать профиль", "Удалить профиль", "Выход" и тд))
-
 import SwiftUI
+import WaterfallGrid
 
 struct ProfileView: View {
-    @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var viewModel: ProfileViewModel
     @State private var showDeleteConfirmation = false
     @State private var isAccountDeleted = false
     @State private var showingEditProfile = false
+    @State private var showingFollowAction = false
+    @State private var isGridViewActive = false
+
+    
+    // Инициализатор для текущего пользователя
+    init() {
+        _viewModel = StateObject(wrappedValue: ProfileViewModel())
+    }
+    
+    // Инициализатор для чужого профиля
+    init(userId: Int) {
+        _viewModel = StateObject(wrappedValue: ProfileViewModel(userId: userId))
+    }
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack {
                     if let profile = viewModel.profile {
+                        let _ = print("Rendering profile: \(profile.username)")
+                        
+                        //Верхняя секция профиля
                         profileHeaderSection(profile: profile)
+                            .padding(.bottom, 20)
+                        if !viewModel.isCurrentUser {
+                            // Подписки
+                            followButton
+                        }
+                        // Посты
                         postsSection(profile: profile)
-                        Spacer()
-                        HStack {
-                            deleteButton
-                            logoutButton
+                        if viewModel.isCurrentUser {
+                            Spacer()
+                            // Секция текущего профиля (кнопка удалить и выйти)
+                            currentUserActions
                         }
                     } else if viewModel.isLoading {
+                        // Прогрузка
                         loadingSection
                     } else if let errorMessage = viewModel.errorMessage {
+                        // Ошибка профиля
                         errorSection(errorMessage: errorMessage)
                     }
                 }
@@ -31,7 +53,9 @@ struct ProfileView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
+                print("Профиль прогрузился")
                 if viewModel.profile == nil {
+                    print("Загрузка профиля...")
                     viewModel.loadProfile()
                 }
             }
@@ -63,7 +87,15 @@ struct ProfileView: View {
     }
     
     // MARK: - func()
-    
+
+    // Секция текущего профиля (кнопка удалить и выйти)
+    private var currentUserActions: some View {
+        HStack(spacing: 35) {
+            deleteButton
+            logoutButton
+        }
+    }
+
     // Верхняя секция профиля (фото, имя, никнейм, "редактировать профиль", кол-во постов)
     private func profileHeaderSection(profile: Profile) -> some View {
         VStack(spacing: 30) {
@@ -95,74 +127,158 @@ struct ProfileView: View {
                         .foregroundColor(Color.Custom.gray)
                     
                     // Никнейм
-                    Text("@\(profile.username)")
+                    Text(formatUsername(profile.username))
                         .font(.system(size: 16))
-                        .fontWeight(.semibold)
+                        .fontWeight(.regular)
                         .foregroundColor(Color.Custom.gray.opacity(0.5))
                 }
             }
             
-            // Кнопка редактирования профиля
-            Button(action: {
-                showingEditProfile = true
-            }) {
-                HStack(alignment: .center, spacing: 10) {
-                    Text("Редактировать профиль")
-                        .font(.system(size: 16))
-                        .fontWeight(.regular)
-                        .foregroundColor(Color.Custom.gray)
-                    Image("Edit")
-                        .frame(width: 30, height: 30)
-                }
-                .padding(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 10))
-                .background(Color.Custom.lightGray)
-                .cornerRadius(40)
-            }
-            
-            // Статистика: количество постов
+            // Статистика
             HStack(spacing: 20) {
                 VStack {
-                    Text("\(profile.posts?.count ?? 0)")
+                    Text("\(profile.subscriptions)")
                         .font(.system(size: 16))
                         .fontWeight(.semibold)
                         .foregroundColor(Color.Custom.gray)
-                    Text("постов")
+                    Text("подписки")
                         .font(.system(size: 16))
                         .fontWeight(.regular)
                         .foregroundColor(Color.Custom.gray.opacity(0.5))
+                }
+                VStack {
+                    Text("\(profile.subscribers)")
+                        .font(.system(size: 16))
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.Custom.gray)
+                    Text("подписчики")
+                        .font(.system(size: 16))
+                        .fontWeight(.regular)
+                        .foregroundColor(Color.Custom.gray.opacity(0.5))
+                }
+            }
+            
+            // Кнопка редактирования профиля (только для текущего пользователя)
+            if viewModel.isCurrentUser {
+                Button(action: {
+                    showingEditProfile = true
+                }) {
+                    HStack(alignment: .center, spacing: 10) {
+                        Text("Редактировать профиль")
+                            .font(.system(size: 16))
+                            .fontWeight(.regular)
+                            .foregroundColor(Color.Custom.gray)
+                        Image("settings_icon")
+                            .frame(width: 30, height: 30)
+                    }
+                    .padding(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 10))
+                    .background(Color.Custom.lightGray)
+                    .cornerRadius(40)
                 }
             }
         }
     }
     
-    // Публикации
+    // Функция для корректного отображения никнейма
+    private func formatUsername(_ username: String) -> String {
+        if username.hasPrefix("@") {
+            return username
+        } else {
+            return "@" + username
+        }
+    }
+    
+    // Публикации с переключателем вида
     private func postsSection(profile: Profile) -> some View {
-        VStack {
-            // Заголовок "Публикации"
+        VStack(spacing: 0) {
+            // Заголовок по центру
             Text("Публикации".uppercased())
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .font(.system(size: 23))
-                .fontWeight(.regular)
+                .frame(maxWidth: .infinity)
+                .font(.system(size: 21))
+                .fontWeight(.medium)
                 .foregroundColor(Color.Custom.gray)
-                .padding(EdgeInsets(top: 40, leading: 16, bottom: 26, trailing: 0))
+                .padding(.top, 25)
+                .padding(.bottom, 16)
             
-            // Список публикаций (если есть)
-            if let posts = profile.posts, !posts.isEmpty {
-                VStack(spacing: 16) {
-                    ForEach(posts) { post in
-                        NavigationLink(destination: PostDetailView(post: post)) {
-                            PostView(post: post)
+            // Иконки переключения вида
+            HStack {
+                // Переключатель вида
+                HStack(spacing: 16) {
+                    // Кнопка списка
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            isGridViewActive = false
                         }
-                        .buttonStyle(PlainButtonStyle())
+                    }) {
+                        Image("list.bullet_icon")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color.Custom.gray)
+                            .opacity(isGridViewActive ? 0.5 : 1.0)
+                    }
+                    
+                    // Кнопка сетки
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            isGridViewActive = true
+                        }
+                    }) {
+                        Image("square.grid.2x2_icon")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color.Custom.gray)
+                            .opacity(isGridViewActive ? 1.0 : 0.5)
                     }
                 }
-                .padding(.horizontal)
-            } else {
-                Text("Нет постов")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .font(.system(size: 16))
-                    .foregroundColor(.gray)
-                    .padding(EdgeInsets(top: 0, leading: 16, bottom: 40, trailing: 0))
+                .padding(.leading, 16)
+                .padding(.bottom, 30)
+                Spacer()
+            }
+            
+            // Контент в зависимости от выбранного вида
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 30)
+            } else if let posts = profile.posts {
+                if posts.isEmpty {
+                    Text("Нет постов")
+                        .frame(maxWidth: .infinity)
+                        .font(.system(size: 16))
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 40)
+                } else {
+                    Group {
+                        if isGridViewActive {
+                            // Водопадная сетка
+                            ScrollView {
+                                WaterfallGrid(posts, id: \.id) { post in
+                                    NavigationLink(destination: PostDetailView(post: post)) {
+                                        PostView(post: post)
+                                            .frame(width: (UIScreen.main.bounds.width - 38) / 2)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                                .gridStyle(
+                                    columns: 2,
+                                    spacing: 10,
+                                    animation: .easeInOut
+                                )
+                                .padding(.bottom, 15)
+                            }
+                        } else {
+                            // Обычная лента
+                            LazyVStack(spacing: 16) {
+                                ForEach(posts) { post in
+                                    NavigationLink(destination: PostDetailView(post: post)) {
+                                        PostView(post: post)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                    .transition(.opacity.combined(with: .scale))
+                }
             }
         }
     }
@@ -203,21 +319,42 @@ struct ProfileView: View {
     // Кнопка выхода
     private var logoutButton: some View {
         Button(action: viewModel.logout) {
-            HStack(alignment: .center, spacing: 10) {
+            VStack {
                 Text("Выйти")
                     .font(.system(size: 16))
                     .fontWeight(.regular)
                     .foregroundColor(Color.Custom.gray)
-                Image(systemName: "arrow.right.circle.fill")
-                    .resizable()
-                    .frame(width: 30, height: 30)
-                    .foregroundColor(Color.Custom.gray.opacity(0.5))
             }
-            .padding(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 10))
+            .padding(EdgeInsets(top: 15, leading: 25, bottom: 15, trailing: 25))
             .background(Color.Custom.lightGray)
             .cornerRadius(40)
         }
         .padding(.vertical, 30)
+    }
+
+    // Кнопка подписки/отписки
+    private var followButton: some View {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                if viewModel.profile?.isFollowing == true {
+                    viewModel.profile?.isFollowing = false
+                    viewModel.profile?.subscribers = max(0, (viewModel.profile?.subscribers ?? 1) - 1)
+                } else {
+                    viewModel.profile?.isFollowing = true
+                    viewModel.profile?.subscribers = (viewModel.profile?.subscribers ?? 0) + 1
+                }
+            }
+        }) {
+            Text(viewModel.profile?.isFollowing == true ? "Отписаться" : "Подписаться")
+                .font(.system(size: 16))
+                .fontWeight(.regular)
+                .foregroundColor(viewModel.profile?.isFollowing == true ? Color.Custom.gray : .white)
+                .padding(EdgeInsets(top: 15, leading: 25, bottom: 15, trailing: 25))
+                .background(viewModel.profile?.isFollowing == true ? Color.Custom.lightGray : Color.Custom.carrot)
+                .cornerRadius(40)
+                .animation(.easeInOut, value: viewModel.profile?.isFollowing)
+        }
+        .padding(.bottom, 20)
     }
     
     // Загрузка данных профиля

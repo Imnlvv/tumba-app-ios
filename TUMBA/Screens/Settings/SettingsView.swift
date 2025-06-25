@@ -1,44 +1,75 @@
+//
+//  SettingsView.swift
+//  TUMBA
+//
+//  Created by Patima Imanalieva on 13.05.2025.
+//
+
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("isDarkMode") private var isDarkMode: Bool = false // Хранит состояние темы
-    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = true
-    @Environment(\.dismiss) var dismiss // Позволяет закрыть экран
+    @StateObject private var viewModel = SettingsViewModel()
+    @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Appearance")) {
-                    Toggle(isOn: $isDarkMode) {
-                        Text("Dark Mode")
-                    }
-                    .onChange(of: isDarkMode) { oldValue, newValue in
-                        updateAppearance(newValue)
-                    }
-                    
-                    Section(header: Text("About")) {
-                        HStack {
-                            Text("Version")
-                            Spacer()
-                            Text("1.0.0")
-                        }
-                        HStack {
-                            Text("Developer")
-                            Spacer()
-                            Text("ADC Hub")
-                        }
-                    }
+            ScrollView {
+                VStack(spacing: 35) {
+                    infoSection
+                    versionSection
                 }
-                .navigationBarTitle("Settings", displayMode: .inline)
+                .padding(.horizontal)
+                .padding(.top, 20)
+                .padding(.leading, 10)
             }
+            .navigationBarTitle("Настройки", displayMode: .inline)
+            .background(Color.white)
         }
     }
     
-    func updateAppearance(_ isDarkMode: Bool) {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else { return }
-        window.overrideUserInterfaceStyle = isDarkMode ? .dark : .light
-    }
-
+    // MARK: - Секции
     
+    private var infoSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            SectionHeader(title: "Информация")
+            
+            VStack(spacing: 20) {
+                NavigationLink(destination: AboutView(viewModel: viewModel)) {
+                    SettingsRow(
+                        title: "О нас",
+                        value: nil,
+                        isNavigation: true
+                    )
+                }
+                
+                NavigationLink(destination: SupportView(viewModel: viewModel)) {
+                    SettingsRow(
+                        title: "Поддержка",
+                        value: nil,
+                        isNavigation: true
+                    )
+                }
+            }
+            .padding()
+            .background(Color.white)
+        }
+    }
+    
+    private var versionSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            SectionHeader(title: "О приложении")
+            
+            VStack(spacing: 12) {
+                SettingsRow(
+                    title: "Версия",
+                    value: "1.0.0",
+                    isNavigation: false
+                )
+            }
+            .padding()
+            .background(Color.white)
+            .padding(.bottom, 30)
+        }
+    }
 }

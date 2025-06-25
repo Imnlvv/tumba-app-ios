@@ -3,24 +3,27 @@ import WaterfallGrid
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
-
+    @State private var lastScrollOffset: CGFloat = 0
+    @State private var isTopSectionVisible = true
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Верхняя секция (поиск и фильтры)
-                topSection
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .background(Color.white)
-                    .onAppear {
-                        if viewModel.tags.isEmpty || viewModel.posts.isEmpty {
-                            viewModel.loadTags()
-                            viewModel.loadPosts()
+                if isTopSectionVisible {
+                    topSection
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .background(Color.white)
+                        .onAppear {
+                            if viewModel.tags.isEmpty || viewModel.posts.isEmpty {
+                                viewModel.loadTags()
+                                viewModel.loadPosts()
+                            }
                         }
-                    }
-                    .frame(height: 100)
-
-                Spacer().frame(height: 25)
-
+                        .zIndex(1) // Размещаем выше контента
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+                
                 // Основная секция (посты)
                 if viewModel.isLoading {
                     loadingSection
@@ -29,9 +32,10 @@ struct HomeView: View {
                 } else {
                     postsGridSection
                 }
-
+                
                 Spacer()
             }
+            .animation(.easeInOut(duration: 0.25), value: isTopSectionVisible)
             .navigationDestination(isPresented: Binding(
                 get: { viewModel.selectedPost != nil },
                 set: { _ in viewModel.selectedPost = nil }
@@ -45,11 +49,10 @@ struct HomeView: View {
     
     // MARK: - func()
 
-    // Верхняя секция (поиск и фильтры)
+    // Поиск и теги
     private var topSection: some View {
         VStack(spacing: 25) {
             SearchBarView(searchText: $viewModel.searchText)
-                .padding(.top, 5)
                 .onChange(of: viewModel.searchText) { oldValue, newValue in
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         viewModel.applyFilters()
@@ -60,35 +63,88 @@ struct HomeView: View {
                 viewModel.applyFilters()
             }
         }
+        .padding(.top, -30)
+        .padding(.bottom, 15)
     }
-
-    // Загрузка
+    
+    // Загрузка постов
     private var loadingSection: some View {
         ProgressView()
     }
 
-    // "Нет постов"
+    // Отсутствие постов
     private var noPostsSection: some View {
         Text("Нет подходящих постов")
             .font(.headline)
             .foregroundColor(.gray)
             .padding()
     }
-
-    // Основная секция (посты через гриды)
+    
+    // Лента постов + скролл (анимация)
     private var postsGridSection: some View {
         ScrollView {
+            GeometryReader { proxy in
+                Color.clear
+                    .preference(key: ScrollOffsetPreferenceKey.self, value: proxy.frame(in: .named("scroll")).origin.y)
+            }
+            .frame(height: 0)
+            
             WaterfallGrid(viewModel.filteredPosts, id: \.id) { post in
                 Button(action: {
                     viewModel.selectedPost = post
                 }) {
                     PostView(post: post)
-                        .frame(width: (UIScreen.main.bounds.width - 38) / 2) // Фиксированная ширина
+                        .frame(width: (UIScreen.main.bounds.width - 38) / 2)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
             .gridStyle(columns: 2, spacing: 10)
-            .padding(EdgeInsets(top: 10, leading: 14, bottom: 0, trailing: 14))
+            .padding(EdgeInsets(top: 0, leading: 14, bottom: 15, trailing: 14))
+        }
+        .coordinateSpace(name: "scroll")
+        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+            let scrollOffset = offset
+            let scrollDirection = scrollOffset > lastScrollOffset ? "down" : "up"
+            let threshold: CGFloat = 70
+            
+            // Фильтрация небольших колебаний
+            guard abs(scrollOffset - lastScrollOffset) > 1 else { return }
+            lastScrollOffset = scrollOffset
+            
+            // Плавная анимация
+            if scrollDirection == "up" && scrollOffset < -threshold {
+                if isTopSectionVisible {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
+                            isTopSectionVisible = false
+                        }
+                    }
+                }
+            } else if scrollDirection == "down" {
+                if !isTopSectionVisible {
+                    withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
+                        isTopSectionVisible = true
+                    }
+                }
+            }
         }
     }
 }
+
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value += nextValue()
+    }
+}
+
+
+// MARK: - Превью
+
+struct HomeView_Previews: PreviewProvider {
+    static var previews: some View {
+        HomeView()
+    }
+}
+

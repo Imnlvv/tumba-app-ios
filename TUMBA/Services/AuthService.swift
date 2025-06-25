@@ -4,6 +4,16 @@ import UIKit
 class AuthService {
     static let shared = AuthService()
     
+    // Получаем текущего пользователя
+    var currentUser: UserWithProfile? {
+        return loadUser()
+    }
+    
+    // Получаем только профиль текущего пользователя
+    var currentProfile: Profile? {
+        return loadUser()?.profile
+    }
+    
     private init() {}
     
     // MARK: - Конфигурация Keychain
@@ -21,7 +31,7 @@ class AuthService {
     func login(email: String, password: String, completion: @escaping (Result<UserWithProfile, Error>) -> Void) {
         print("Вход: \(email)")
         
-        let endpoint = "/sign_in"
+        let endpoint = "/api/v1/sign_in"
         let body: [String: Any] = ["user": ["email": email, "password": password]]
         let headers = [
             "Accept": "application/json",
@@ -65,7 +75,7 @@ class AuthService {
     ) {
         print("Регистрация: \(email), username: \(username)")
         
-        let endpoint = "/sign_up"
+        let endpoint = "/api/v1/sign_up"
         let headers = [
             "Content-Type": "application/json",
             "Accept": "application/json"
@@ -112,7 +122,7 @@ class AuthService {
         passwordConfirmation: String,
         completion: @escaping (Result<UserWithProfile, Error>) -> Void
     ) {
-        let endpoint = "/sign_up"
+        let endpoint = "/api/v1/sign_up"
         let headers = [
             "Content-Type": "application/json",
             "Accept": "application/json"
@@ -171,7 +181,7 @@ class AuthService {
         
         print("Используемый токен: \(token)")
         
-        let endpoint = "/sign_out"
+        let endpoint = "/api/v1/sign_out"
         let headers = [
             "Accept": "application/json",
             "Authorization": token
@@ -207,7 +217,7 @@ class AuthService {
             return
         }
 
-        let endpoint = "/delete_account"
+        let endpoint = "/api/v1/delete_account"
         let headers = [
             "Accept": "application/json",
             "Authorization": "Bearer \(token)"
@@ -242,7 +252,7 @@ class AuthService {
             return
         }
         
-        let endpoint = "/me/profile"
+        let endpoint = "/api/v1/me/profile"
         let headers = [
             "Accept": "application/json",
             "Authorization": "Bearer \(token)"
@@ -277,7 +287,7 @@ class AuthService {
     
     // Запрос профиля пользователя после регистрации
     func fetchUserProfile(profileId: Int, completion: @escaping (Result<UserWithProfile, Error>) -> Void) {
-        let endpoint = "/profiles/\(profileId)"
+        let endpoint = "/api/v1/profiles/\(profileId)"
         
         DataLoader.shared.request(
             endpoint: endpoint,
@@ -315,7 +325,7 @@ class AuthService {
             return
         }
         
-        let endpoint = "/profiles/\(profileId)"
+        let endpoint = "/api/v1/profiles/\(profileId)"
         let headers = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(token)"
@@ -365,7 +375,7 @@ class AuthService {
             return
         }
         
-        let endpoint = "/profiles/\(profileId)"
+        let endpoint = "/api/v1/profiles/\(profileId)"
         let headers = [
             "Authorization": "Bearer \(token)"
         ]
@@ -406,7 +416,7 @@ class AuthService {
             return
         }
         
-        let endpoint = "/profiles/\(profileId)"
+        let endpoint = "/api/v1/profiles/\(profileId)"
         let headers = ["Authorization": "Bearer \(token)"]
         
         DataLoader.shared.multipartRequest(
@@ -442,7 +452,7 @@ class AuthService {
             return
         }
         
-        let endpoint = "/profiles/\(profileId)"
+        let endpoint = "/api/v1/profiles/\(profileId)"
         let headers = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(token)"
@@ -557,6 +567,10 @@ class AuthService {
         )
     }
     
+    func getCurrentUserId() -> Int? {
+        return loadUser()?.profile?.id
+    }
+    
     // Миграции
     func migrateFromUserDefaultsToKeychain() {
         print("Начало миграции данных из UserDefaults в Keychain")
@@ -586,7 +600,3 @@ class AuthService {
         }
     }
 }
-
-
-
-

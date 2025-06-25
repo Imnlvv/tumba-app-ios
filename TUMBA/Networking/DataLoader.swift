@@ -1,12 +1,10 @@
-//  DataLoader.swift
-//  Мы вынесли основную логику, сделав параметризованный загрузчик данных на различные запросы к серверу. В дальнейшем мы хотим преобразовать стандартный JSON и Multipart запросы: передавать endpoint, method и headers уже через расписанные переменные (подробнее в папке endpoints, файлах networking и reguest). Пока это прописывание (в DataLoader и сервисных слоях) в разработке.
 
 import Foundation
 import UIKit
 
 class DataLoader {
     static let shared = DataLoader()
-    private let baseURL = "http://localhost:3000/api/v1"
+    private let baseURL = "http://localhost:3000"
     private init() {}
     
     // MARK: - Логирование запросов
@@ -23,16 +21,26 @@ class DataLoader {
     // MARK: - Логирование ответов
     private func logResponse(_ data: Data?, _ response: URLResponse?, _ error: Error?) {
         if let error = error {
-            print("Error: \(error.localizedDescription)")
+            print("Ошибка: \(error.localizedDescription)")
             return
         }
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            print("No HTTP Response")
+            print("Нет HTTP-ответа")
             return
         }
+        
+//        print("Status Code: \(httpResponse.statusCode)")
+        
+        if let data = data {
+            if String(data: data, encoding: .utf8) != nil {
+//                print("Raw response: \(jsonString)")
+            } else {
+                print("Данные ответа не являются строкой UTF-8")
+            }
+        }
     }
-    
+
     // MARK: - Стандартный JSON-запрос
     func request<T: Decodable>(
         endpoint: String,
@@ -41,6 +49,7 @@ class DataLoader {
         headers: [String: String] = [:],
         completion: @escaping (Result<T, Error>) -> Void
     ) {
+
         guard let url = URL(string: "\(baseURL)\(endpoint)") else {
             completion(.failure(NSError(domain: "Invalid URL", code: -1, userInfo: nil)))
             return
@@ -173,6 +182,74 @@ class DataLoader {
                 DispatchQueue.main.async {
                     completion(.success(()))
                 }
+            }
+        }.resume()
+    }
+    
+    
+
+    func uploadRequest<T: Decodable>(
+        endpoint: String,
+        method: String,
+        body: Data,
+        headers: [String: String],
+        completion: @escaping (Result<T, Error>) -> Void
+    ) {
+        let fullURL = baseURL + endpoint
+        
+        guard let url = URL(string: fullURL) else {
+            completion(.failure(NSError(domain: "Invalid URL", code: -1,
+                                     userInfo: [NSLocalizedDescriptionKey: "Invalid URL: \(fullURL)"])))
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.httpBody = body
+        
+        headers.forEach { key, value in
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(NSError(domain: "Network", code: -1,
+                                          userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+                return
+            }
+            
+            guard (200...299).contains(httpResponse.statusCode) else {
+                var errorMessage = "Server error: \(httpResponse.statusCode)"
+                if let data = data, let jsonString = String(data: data, encoding: .utf8) {
+                    errorMessage += "\nResponse: \(jsonString)"
+                }
+                completion(.failure(NSError(domain: "Network", code: httpResponse.statusCode,
+                                          userInfo: [NSLocalizedDescriptionKey: errorMessage])))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "Network", code: -1,
+                                          userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let decoded = try decoder.decode(T.self, from: data)
+                completion(.success(decoded))
+            } catch {
+                print("Ошибка декодирования: \(error)")
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Оригинальный ответ: \(jsonString)")
+                }
+                completion(.failure(error))
             }
         }.resume()
     }

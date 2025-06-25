@@ -9,6 +9,7 @@ class HomeViewModel: ObservableObject {
     @Published var filteredPosts: [Post] = []
     @Published var selectedPost: Post?
     @Published var isLoading: Bool = false
+    @Published var selectedTab: Int = 0
 
     // MARK: Прогрузка тегов
     func loadTags() {
@@ -57,7 +58,7 @@ class HomeViewModel: ObservableObject {
             let matchesSearch = searchText.isEmpty || {
                 let lowercasedSearch = searchText.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
                 let titleMatches = post.title.lowercased().contains(lowercasedSearch)
-                let descriptionMatches = post.description.lowercased().contains(lowercasedSearch) ?? false
+                let descriptionMatches = post.description.lowercased().contains(lowercasedSearch)
                 let authorNameMatches = post.profile?.name.lowercased().contains(lowercasedSearch) ?? false
                 
                 return titleMatches || descriptionMatches || authorNameMatches
@@ -65,7 +66,5 @@ class HomeViewModel: ObservableObject {
 
             return matchesTags && matchesSearch
         }
-        
-        
     }
 }

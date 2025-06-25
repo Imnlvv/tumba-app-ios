@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 struct Profile: Codable, Identifiable {
     let id: Int
@@ -36,25 +37,22 @@ struct Profile: Codable, Identifiable {
         username = try container.decode(String.self, forKey: .username)
         name = try container.decode(String.self, forKey: .name)
         bio = try? container.decode(String.self, forKey: .bio)
-        
-        // Безопасное декодирование дат (если нет в JSON, будет nil)
         createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt)
         updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
-
-        
-        // Декодируем массивы (если нет в JSON, будет пустой массив)
         posts = (try? container.decodeIfPresent([Post].self, forKey: .posts)) ?? []
         items = (try? container.decode([Item].self, forKey: .items)) ?? []
         comments = (try? container.decode([Comment].self, forKey: .comments)) ?? []
         likes = (try? container.decode([Like].self, forKey: .likes)) ?? []
-
-        // Декодируем avatar_url (строка или объект)
         if let avatarObject = try? container.decode([String: String].self, forKey: .avatarUrl) {
             avatarUrl = avatarObject["url"]
         } else {
             avatarUrl = try? container.decode(String.self, forKey: .avatarUrl)
         }
     }
+    
+    var subscribers = 0
+    var subscriptions = 0
+    var isFollowing: Bool?
 }
 
 struct ProfileResponse: Codable {

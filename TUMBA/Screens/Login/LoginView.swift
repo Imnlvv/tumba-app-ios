@@ -39,11 +39,11 @@ struct LoginView: View {
 
     // Основной контент (заголовок, поля ввода, ссылка на регистрацию)
     private var loginContentSection: some View {
-        VStack(spacing: 50) {
+        VStack(spacing: 40) {
             // Заголовок
-            Text("Вход")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+            Text("ВХОД")
+                .font(.system(size: 21))
+                .fontWeight(.semibold)
             Text("С возвращением, мы скучали!")
                 .font(.body)
                 .foregroundColor(.gray)
@@ -60,8 +60,8 @@ struct LoginView: View {
                 
                 // Ссылка на регистрацию
                 Button(action: { viewModel.isNavigatingToRegister = true }) {
-                    Text("Нет аккаунта? Зарегистрироваться")
-                        .foregroundColor(.ocean)
+                    Text("У вас еще нет аккаунта?\nЗарегистрироваться")
+                        .foregroundColor(Color.Custom.gray.opacity(0.5))
                         .font(.footnote)
                 }
                 .padding(.top, 8)
@@ -73,7 +73,7 @@ struct LoginView: View {
     // Кнопка входа
     private var loginButtonSection: some View {
         Button(action: viewModel.login) {
-            Text("Войти")
+            Text("ВОЙТИ")
                 .fontWeight(.bold)
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity)

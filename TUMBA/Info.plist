@@ -4,7 +4,30 @@
 <dict>
 	<key>UIAppFonts</key>
 	<array>
+		<string>Onest-VariableFont_wght.ttf</string>
+		<string>Onest-Thin.ttf</string>
+		<string>Onest-SemiBold.ttf</string>
+		<string>Onest-Regular.ttf</string>
+		<string>Onest-Medium.ttf</string>
+		<string>Onest-Light.ttf</string>
+		<string>Onest-ExtraLight.ttf</string>
+		<string>Onest-ExtraBold.ttf</string>
+		<string>Onest-Bold.ttf</string>
+		<string>Onest-Black.ttf</string>
 		<string>RAYDIS.otf</string>
 	</array>
+	<key>CFBundleIdentifier</key>
+	<string>&lt;key&gt;LSApplicationQueriesSchemes&lt;/key&gt;
+&lt;array&gt;
+    &lt;string&gt;tg&lt;/string&gt;
+    &lt;string&gt;https&lt;/string&gt;
+    &lt;string&gt;http&lt;/string&gt;
+&lt;/array&gt;</string>
+	<key>CFBundleExecutable</key>
+	<string>&lt;key&gt;com.apple.developer.web-browser-engine.allow&lt;/key&gt;
+&lt;true/&gt;</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>&lt;key&gt;NSLocationWhenInUseUsageDescription&lt;/key&gt;
+&lt;string&gt;Для отображения вашего местоположения на карте&lt;/string&gt;</string>
 </dict>
 </plist>

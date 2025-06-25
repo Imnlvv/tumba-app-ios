@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct OnboardingPageView: View {
-    let number: Int // Номер пункта
+    let number: Int
     let image: String
     let title: String
     let description: String
@@ -19,12 +19,6 @@ struct OnboardingPageView: View {
             }
             .padding(.top)
             Spacer()
-            // Средняя часть — картинка
-            Image(image)
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: 300)
-            Spacer()
             // Нижняя часть — текстовая информация
             VStack(spacing: 35) {
                 Text(title)
@@ -39,8 +33,23 @@ struct OnboardingPageView: View {
             }
             .padding(.horizontal, 0)
             .padding(.bottom)
+            Spacer()
+            // Средняя часть — картинка
+            Image(image)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 300)
+            Spacer()
+
         }
         .frame(maxHeight: .infinity)
         .padding(.vertical, 20)
+    }
+}
+
+
+struct OnboardingView_Previews: PreviewProvider {
+    static var previews: some View {
+        OnboardingView()
     }
 }

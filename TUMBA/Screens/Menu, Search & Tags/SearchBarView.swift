@@ -20,8 +20,8 @@ struct SearchBarView: View {
                     
             Spacer()
             Image(systemName: "magnifyingglass")
-                .padding(.trailing, 8)
-                .padding(.top, 15)
+                .padding(.trailing, 9)
+                .padding(.top, 27)
                 .foregroundColor(searchText.isEmpty ? Color.gray.opacity(0.3) : Color.ocean)
         }
         .padding(.horizontal)

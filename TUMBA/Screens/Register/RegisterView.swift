@@ -40,10 +40,16 @@ struct RegisterView: View {
     // Этапы регистрации
     // Первый экран (почта + пароль)
     private var stepOneView: some View {
-        VStack(spacing: 50) {
-            Text("Регистрация")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+        VStack(spacing: 40) {
+            Text("РЕГИСТРАЦИЯ")
+                .font(.system(size: 21))
+                .fontWeight(.semibold)
+
+            Text("Введите свои данные для создания аккаунта")
+                .font(.body)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 200)
             
             VStack(spacing: 25) {
                 LabeledTextField(label: "Email", text: $viewModel.email, placeholder: "user@email.com", isSecure: false)
@@ -60,10 +66,17 @@ struct RegisterView: View {
     
     // Второй экран (имя, никнейм, фото)
     private var stepTwoView: some View {
-        VStack(spacing: 20) {
-            Text("Заполните профиль")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+        VStack(spacing: 40) {
+            
+            Text("О СЕБЕ")
+                .font(.system(size: 21))
+                .fontWeight(.semibold)
+            
+            Text("Добавьте фото\nи заполните анкету:")
+                .font(.body)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 200)
             
             avatarSection
             
@@ -87,22 +100,22 @@ struct RegisterView: View {
                     .resizable()
                     .scaledToFill()
                     .frame(width: 170, height: 170)
-                    .clipShape(Rectangle())
+                    .clipShape(Circle())
             } else {
                 ZStack {
-                    Rectangle()
+                    Circle()
                         .stroke(style: StrokeStyle(lineWidth: 1, dash: [10]))
                         .foregroundColor(.gray.opacity(0.5))
                         .frame(width: 170, height: 170)
-
+                    
                     Circle()
                         .fill(Color.Custom.gray.opacity(0.5))
-                        .frame(width: 40, height: 40)
-
+                        .frame(width: 50, height: 50)
+                    
                     Image(systemName: "plus")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 10, height: 10)
+                        .frame(width: 15, height: 15)
                         .foregroundColor(.white)
                 }
             }
@@ -122,19 +135,19 @@ struct RegisterView: View {
         VStack {
             if viewModel.isStepTwo {
                 Button(action: { viewModel.isStepTwo = false }) {
-                    Text("Назад")
+                    Text("НАЗАД")
                         .foregroundColor(.ocean)
                         .padding()
                 }
             } else {
                 Button(action: { dismiss() }) {
-                    Text("Отмена")
+                    Text("ОТМЕНА")
                         .foregroundColor(.ocean)
                         .padding()
                 }
             }
             Button(action: viewModel.nextStep) {
-                Text(viewModel.isStepTwo ? "Зарегистрироваться" : "Далее")
+                Text(viewModel.isStepTwo ? "ЗАРЕГИСТРИРОВАТЬСЯ" : "ДАЛЕЕ")
                     .fontWeight(.bold)
                     .padding(.vertical, 16)
                     .frame(maxWidth: .infinity)

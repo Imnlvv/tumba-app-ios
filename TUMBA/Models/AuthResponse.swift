@@ -16,11 +16,7 @@ struct AuthResponse: Decodable {
         messages = try container.decode(String.self, forKey: .messages)
         is_success = try container.decode(Bool.self, forKey: .is_success)
         jwt = try container.decode(String.self, forKey: .jwt)
-
-        // Декодируем пользователя
         user = try container.decode(UserWithProfile.self, forKey: .user)
-
-        // Если в JSON есть profile, присваиваем его
         if let profileData = try? container.decode(Profile.self, forKey: .profile) {
             user.profile = profileData
         }

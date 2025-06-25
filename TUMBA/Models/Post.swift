@@ -1,31 +1,27 @@
 import Foundation
 
-struct Post: Codable, Identifiable, Equatable {
+struct Post: Codable, Identifiable {
     let id: Int
     let title: String
     let description: String
-    let imageUrl: ImageURL?
+    var imageUrl: ImageURL?
     let isPublic: Bool
-    let createdAt: String
-    let updatedAt: String
+    var createdAt: String?
+    let updatedAt: String?
     let tags: [String]
     var profile: Profile?
     let items: [Item]?
     let comments: [Comment]?
-    let likes: [Like]?
+    var likes: [Like]?
     
-    static func == (lhs: Post, rhs: Post) -> Bool {
-        return lhs.id == rhs.id
-    }
-
     enum CodingKeys: String, CodingKey {
-        case id, title, description, profile, tags, items, comments, likes
+        case id, title, description, tags, items, comments, likes, profile
         case imageUrl = "image_url"
         case isPublic = "public"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
-
+    
     struct ImageURL: Codable {
         let url: String?
 
@@ -41,13 +37,17 @@ struct Post: Codable, Identifiable, Equatable {
     }
 }
 
-struct PostResponse: Codable {
+struct PostsResponse: Codable {
     let posts: [Post]
-    
+}
+
+struct PostResponse: Codable {
+    let post: Post
 }
 
 struct ImageUploadResponse: Decodable {
     let url: String
 }
+
 
 

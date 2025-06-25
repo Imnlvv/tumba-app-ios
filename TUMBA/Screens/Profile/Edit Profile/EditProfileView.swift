@@ -15,9 +15,13 @@ struct EditProfileView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 10) {
-                    avatarSection
-                    mainInfoSection
+                VStack(spacing: 60) {
+                    VStack(spacing: 10) {
+                        // Аватар
+                        avatarSection
+                        // Основная информация
+                        mainInfoSection
+                    }
                     saveButton
                 }
                 .padding()
@@ -41,16 +45,21 @@ struct EditProfileView: View {
             } else {
                 PhotosPicker(selection: $viewModel.selectedImageItem, matching: .images) {
                     ZStack {
+                        
                         Circle()
                             .stroke(style: StrokeStyle(lineWidth: 1, dash: [10]))
                             .foregroundColor(.gray.opacity(0.5))
                             .frame(width: 170, height: 170)
                         
-                        Image(systemName: "person.circle.fill")
+                        Circle()
+                            .fill(Color.Custom.gray.opacity(0.5))
+                            .frame(width: 50, height: 50)
+                        
+                        Image(systemName: "plus")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 60, height: 60)
-                            .foregroundColor(.gray.opacity(0.5))
+                            .frame(width: 15, height: 15)
+                            .foregroundColor(.white)
                     }
                 }
                 .onChange(of: viewModel.selectedImageItem) { _ in
@@ -94,5 +103,16 @@ struct EditProfileView: View {
         .background(Color.ocean)
         .foregroundColor(.white)
         .padding(.horizontal)
+    }
+}
+
+// MARK: -  Preview
+struct EditProfileView_Previews: PreviewProvider {
+    static var previews: some View {
+        EditProfileView(
+            name: "Patima",
+            username: "imnlv",
+            onSave: { _, _, _ in }
+        )
     }
 }
