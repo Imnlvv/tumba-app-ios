@@ -36,7 +36,8 @@ TUMBA/
 </pre>
 
 ## Backend Integration
-The app communicates with a custom Ruby on Rails backend through secure, token-based RESTful API endpoints. All user actions — from login to collection creation — are synchronized with the server in real time.
+The app communicates with a custom Ruby on Rails backend through secure, token-based RESTful API endpoints. All user actions — from login to collection creation — are synchronized with the server in real time.  
+Backend source code is available here: [GitHub - TUMBA](https://github.com/IrinaApolonnik/TUMBA)
 
 ## How to Run
 1. Clone the repository  
